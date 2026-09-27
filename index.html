@@ -523,9 +523,13 @@
       </div>
     </div>
 
-    <!-- Progress Strip -->
+    <!-- Progress Strip & Summary -->
     <div class="progress-strip">
       <div id="progressBar" class="progress-fill" style="width: 0%;"></div>
+    </div>
+    <div style="background:#f8fafc; padding:3px 12px; font-size:10.5px; color:#334155; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0;">
+      <span>📊 配布進捗: <strong id="lblProgressSummary" style="color:#0284c7;">0 / 0件 (0%)</strong></span>
+      <span style="font-size:9.5px; color:#64748b;">📍 最短未訪問先を自動案内</span>
     </div>
 
     <!-- Main Viewport Area -->
@@ -828,10 +832,10 @@
       customers.sort((a, b) => a.distKm - b.distKm);
       customers.forEach((c, idx) => c.seq = idx + 1);
 
-      // Select first unvisited customer as focus target
-      if (!currentFocusTarget || currentFocusTarget.done === 1) {
-        currentFocusTarget = customers.find(x => x.done === 0) || customers[0];
-      }
+      // Select the closest unvisited customer as focus target
+      // (If all are done, fallback to the closest customer)
+      const closestUnvisited = customers.find(x => x.done === 0);
+      currentFocusTarget = closestUnvisited || customers[0] || null;
 
       renderFocusCard();
       renderList();
@@ -843,13 +847,26 @@
       if (!currentFocusTarget) return;
 
       const t = currentFocusTarget;
-      document.getElementById('txtFocusSeq').textContent = t.seq;
-      document.getElementById('txtFocusName').textContent = `${t.name} 様`;
-      document.getElementById('txtFocusRank').textContent = `ランク${t.rank}`;
-      document.getElementById('txtFocusDist').textContent = t.distStr || '--';
-      document.getElementById('txtFocusAddr').textContent = `📍 ${t.addr}`;
-      document.getElementById('txtFocusMemo').textContent = t.memo || '特記事項なし';
-      document.getElementById('btnCallPhone').href = `tel:${t.phone}`;
+      const elSeq = document.getElementById('txtFocusSeq');
+      if (elSeq) elSeq.textContent = t.seq || '1';
+
+      const elName = document.getElementById('txtFocusName');
+      if (elName) elName.textContent = `${t.name} 様`;
+
+      const elRank = document.getElementById('txtFocusRank');
+      if (elRank) elRank.textContent = `ランク${t.rank || 'C'}`;
+
+      const elDist = document.getElementById('txtFocusDist');
+      if (elDist) elDist.textContent = t.distStr || '--';
+
+      const elAddr = document.getElementById('txtFocusAddr');
+      if (elAddr) elAddr.textContent = `📍 ${t.addr}`;
+
+      const elMemo = document.getElementById('txtFocusMemo');
+      if (elMemo) elMemo.textContent = t.memo || '特記事項なし';
+
+      const elPhone = document.getElementById('btnCallPhone');
+      if (elPhone) elPhone.href = `tel:${t.phone || ''}`;
 
       // Update In-App Map if open
       if (isInAppSplitOpen) {
@@ -911,13 +928,23 @@
       const remain = total - done;
       const pct = total > 0 ? ((done / total) * 100).toFixed(1) : 0;
 
-      document.getElementById('badgeTotalCount').textContent = `${total}件`;
-      document.getElementById('lblProgressSummary').textContent = `${done} / ${total}件 (${pct}%)`;
-      document.getElementById('progressBar').style.width = `${pct}%`;
+      const elBadge = document.getElementById('badgeTotalCount');
+      if (elBadge) elBadge.textContent = `${total}件`;
 
-      document.getElementById('cntAll').textContent = total;
-      document.getElementById('cntRemain').textContent = remain;
-      document.getElementById('cntAbsent').textContent = absent;
+      const elSummary = document.getElementById('lblProgressSummary');
+      if (elSummary) elSummary.textContent = `${done} / ${total}件 (${pct}%)`;
+
+      const elBar = document.getElementById('progressBar');
+      if (elBar) elBar.style.width = `${pct}%`;
+
+      const elAll = document.getElementById('cntAll');
+      if (elAll) elAll.textContent = total;
+
+      const elRemain = document.getElementById('cntRemain');
+      if (elRemain) elRemain.textContent = remain;
+
+      const elAbsent = document.getElementById('cntAbsent');
+      if (elAbsent) elAbsent.textContent = absent;
 
       saveCache();
     }
@@ -1117,7 +1144,9 @@
 
           if (parsedList.length > 0) {
             customers = parsedList;
-            document.getElementById('lblFileSource').textContent = `${file.name} (${customers.length}件)`;
+            currentFocusTarget = null; // Clear old target to force auto-selection of closest unvisited
+            const elLbl = document.getElementById('lblFileSource');
+            if (elLbl) elLbl.textContent = `${file.name} (${customers.length}件)`;
             recalculateDistances();
             closeSetupModal();
             showToast(`✅ ${file.name} から ${customers.length}件を読み込みました！`);
@@ -1181,7 +1210,9 @@
 
     function loadDefaultSampleData() {
       customers = JSON.parse(JSON.stringify(DEFAULT_DATA));
-      document.getElementById('lblFileSource').textContent = "（※見本サンプルデータ表示中）";
+      currentFocusTarget = null;
+      const elLbl = document.getElementById('lblFileSource');
+      if (elLbl) elLbl.textContent = "（※見本サンプルデータ表示中）";
       recalculateDistances();
       closeSetupModal();
       showToast("見本サンプルデータに戻しました");
