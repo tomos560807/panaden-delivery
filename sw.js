@@ -1,5 +1,5 @@
-// Service Worker for Delivery Navi PWA
-const CACHE_NAME = 'panaden-delivery-v6';
+// Service Worker for Delivery Navi PWA (Network-First strategy to ensure latest privacy-cleared code)
+const CACHE_NAME = 'delivery-navi-v7-fresh';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -12,9 +12,7 @@ const ASSETS_TO_CACHE = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
-    })
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS_TO_CACHE))
   );
   self.skipWaiting();
 });
@@ -34,12 +32,33 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
+// Network-First for HTML/Manifest to immediately update UI, Cache-Fallback for offline
 self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
+  
+  // HTML or navigation requests: Network first, fall back to cache
+  if (event.request.mode === 'navigate' || url.pathname.endsWith('.html') || url.pathname.endsWith('/')) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          const resClone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, resClone));
+          return response;
+        })
+        .catch(() => caches.match('./index.html'))
+    );
+    return;
+  }
+
+  // Other assets: Stale-while-revalidate or Cache-first
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
-      return cachedResponse || fetch(event.request).catch(() => {
-        return caches.match('./index.html');
-      });
+      const fetchPromise = fetch(event.request).then((networkResponse) => {
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, networkResponse.clone()));
+        return networkResponse;
+      }).catch(() => null);
+
+      return cachedResponse || fetchPromise;
     })
   );
 });

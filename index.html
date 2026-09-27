@@ -643,9 +643,9 @@
           </button>
         </div>
 
-        <!-- Method 3: Reset / Load Demo Sample -->
-        <button onclick="loadDefaultSampleData()" style="width:100%; background:#f1f5f9; border:1px solid #cbd5e1; color:#475569; padding:8px; border-radius:8px; font-size:11px; font-weight:700; cursor:pointer;">
-          🔄 架空の見本サンプルデータに戻す
+        <!-- Method 3: Reset / Clear Local Data -->
+        <button onclick="clearAllLocalData()" style="width:100%; background:#fee2e2; border:1px solid #fca5a5; color:#991b1b; padding:10px; border-radius:8px; font-size:12px; font-weight:800; cursor:pointer;">
+          🗑️ 端末データを完全に初期化（見本サンプルに戻す）
         </button>
       </div>
     </div>
@@ -1187,21 +1187,50 @@
       showToast("見本サンプルデータに戻しました");
     }
 
+    const STORAGE_KEY = 'yoshimachi_delivery_customers_v2';
+
+    // Auto purge legacy storage keys immediately
+    try {
+      localStorage.removeItem('panaden_delivery_customers');
+      localStorage.removeItem('delivery_navi_customers');
+    } catch (e) {}
+
+    function clearAllLocalData() {
+      if (confirm("スマホ端末に保存されているデータを完全に消去し、架空の見本サンプルに戻しますか？")) {
+        try {
+          localStorage.removeItem(STORAGE_KEY);
+          localStorage.removeItem('panaden_delivery_customers');
+          localStorage.clear();
+        } catch(e) {}
+        loadDefaultSampleData();
+        showToast("🗑️ 端末データを完全に初期化しました");
+      }
+    }
+
     // Local Storage Caching
     function saveCache() {
       try {
-        localStorage.setItem('panaden_delivery_customers', JSON.stringify(customers));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(customers));
       } catch (e) {}
     }
 
     function loadCachedData() {
       try {
-        const saved = localStorage.getItem('panaden_delivery_customers');
+        // Enforce removal of old cache key
+        localStorage.removeItem('panaden_delivery_customers');
+        const saved = localStorage.getItem(STORAGE_KEY);
         if (saved) {
-          customers = JSON.parse(saved);
-          document.getElementById('lblFileSource').textContent = "端末保存データ読み込み済";
-          recalculateDistances();
-          return;
+          const parsed = JSON.parse(saved);
+          // Safety guard: if stored data contains legacy private names, purge it
+          const hasOldData = parsed.some(c => c.name && (c.name.includes("津川") || c.name.includes("秋元") || c.name.includes("本郷")));
+          if (!hasOldData && parsed.length > 0) {
+            customers = parsed;
+            document.getElementById('lblFileSource').textContent = "端末保存データ読み込み済";
+            recalculateDistances();
+            return;
+          } else {
+            localStorage.removeItem(STORAGE_KEY);
+          }
         }
       } catch (e) {}
       loadDefaultSampleData();
