@@ -498,18 +498,18 @@
         <button onclick="toggleInAppSplit()" id="btnSplitToggle" class="header-btn" title="画面内にGoogleマップを表示して2画面にする">
           <span>🪟</span><span id="txtSplitBtn">スプリット地図</span>
         </button>
-        <!-- Open Setup Modal -->
-        <button onclick="openSetupModal()" class="header-btn" style="background:#fde047; color:#0f172a; border-color:#facc15;">
-          <span>📂</span><span>設定/Excel</span>
+        <!-- Open Project & Setup Modal -->
+        <button onclick="openSetupModal()" class="header-btn" style="background:#fde047; color:#0f172a; border-color:#facc15;" title="プロジェクト（案件）の切替や新規追加">
+          <span>📁</span><span>案件切替/Excel</span>
         </button>
       </div>
     </header>
 
     <!-- Status Strip with GPS Power Saver Controls -->
     <div class="status-strip">
-      <div style="display:flex; align-items:center; gap:5px; overflow:hidden;">
+      <div style="display:flex; align-items:center; gap:5px; overflow:hidden; cursor:pointer;" onclick="openSetupModal()" title="タップして案件を切り替える">
         <span id="connLed" style="width:7px; height:7px; background:#10b981; border-radius:50%; display:inline-block;"></span>
-        <span id="lblFileSource" class="file-source-name">（※見本サンプルデータ表示中）</span>
+        <span id="lblFileSource" class="file-source-name" style="text-decoration:underline dotted;">📁 見本サンプル ▾</span>
       </div>
       <div style="display:flex; align-items:center; gap:6px;">
         <!-- Manual 1-Tap Refresh Button (Zero Overheating) -->
@@ -600,56 +600,65 @@
       </div>
     </main>
 
-    <!-- Setup & PC Sync Modal -->
+    <!-- Setup & Project Management Modal -->
     <div id="setupModal" class="modal-backdrop hidden" onclick="closeSetupModal()">
       <div class="modal-sheet" onclick="event.stopPropagation()">
         <div class="modal-title">
-          <span>⚙️ Excel設定 ＆ PCとの共有</span>
+          <span>📁 案件（プロジェクト）管理 ＆ Excel</span>
           <button onclick="closeSetupModal()" style="background:none; border:none; font-size:18px; color:#64748b; cursor:pointer;">✕</button>
         </div>
 
         <p style="font-size:11px; color:#64748b; margin-bottom:12px;">
-          スマホアプリ側でExcelファイルを選ぶだけで設定完了。配布した結果をPC側のファイルと簡単に共有できます。
+          カレンダーやチラシなど、複数のExcelファイルを別々の「案件」として保存し、いつでも切り替えて配達・記録できます。
         </p>
 
+        <!-- Current Active Project Quick Action -->
+        <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:12px; padding:10px 12px; margin-bottom:12px;">
+          <div style="font-size:10px; font-weight:800; color:#1e40af; margin-bottom:2px;">現在選択中の案件:</div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <strong id="modalActiveProjName" style="font-size:14px; color:#0369a1;">📁 見本サンプル案件</strong>
+            <span id="modalActiveProjMetrics" style="font-size:11px; font-weight:700; color:#0284c7;">0 / 0件 (0%)</span>
+          </div>
+          <button onclick="exportUpdatedExcel()" style="width:100%; background:#10b981; color:#fff; border:none; padding:8px; border-radius:8px; font-size:12px; font-weight:800; cursor:pointer;">
+            📥 この案件の更新Excelを書き出す (.xlsx)
+          </button>
+        </div>
+
+        <!-- Add New Project Button -->
+        <div class="setup-box" onclick="triggerFilePicker()" style="background:#f0fdf4; border-color:#86efac; margin-bottom:12px;">
+          <span style="font-size:22px; display:block; margin-bottom:2px;">➕📂</span>
+          <span style="font-size:13px; font-weight:800; color:#16a34a; display:block;">新しいExcelを追加して案件を作成</span>
+          <span style="font-size:10px; color:#64748b;">別のExcel（合展チラシや新リスト）を新規案件として保存</span>
+        </div>
+
+        <!-- Projects List Header -->
+        <div style="font-size:12px; font-weight:800; color:#334155; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
+          <span>📋 保存済み案件一覧（タップで切替）</span>
+          <span id="modalProjCountBadge" style="font-size:10px; background:#e2e8f0; color:#475569; padding:1px 6px; border-radius:10px;">0件</span>
+        </div>
+
+        <!-- Dynamic List of Projects -->
+        <div id="projectCardsList" style="max-height:190px; overflow-y:auto; margin-bottom:14px;">
+          <!-- Rendered dynamically by JS -->
+        </div>
+
         <!-- PWA Install Guide Section -->
-        <div style="background:#fffbeb; border:1px solid #fef3c7; border-radius:12px; padding:12px; margin-bottom:12px;">
-          <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
-            <img src="icon-192.png" style="width:40px; height:40px; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.15); flex-shrink:0;" alt="Caravan App Icon">
+        <div style="background:#fffbeb; border:1px solid #fef3c7; border-radius:10px; padding:10px; margin-bottom:10px;">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+            <img src="icon-192.png" style="width:32px; height:32px; border-radius:8px;" alt="Caravan Icon">
             <div>
-              <div style="font-size:12px; font-weight:800; color:#92400e;">📲 ホーム画面にアイコン登録</div>
-              <div style="font-size:10px; color:#b45309;">キャラバンアイコンでアプリ化</div>
+              <div style="font-size:11px; font-weight:800; color:#92400e;">📲 ホーム画面にアイコン登録</div>
+              <div style="font-size:9.5px; color:#b45309;">キャラバンアイコンでアプリ化</div>
             </div>
           </div>
-          <button onclick="promptPwaInstall()" style="width:100%; background:#d97706; color:#fff; border:none; padding:9px; border-radius:8px; font-size:12px; font-weight:800; cursor:pointer; box-shadow:0 2px 4px rgba(217,119,6,0.3);">
+          <button onclick="promptPwaInstall()" style="width:100%; background:#d97706; color:#fff; border:none; padding:7px; border-radius:6px; font-size:11px; font-weight:800; cursor:pointer;">
             🚐 ホーム画面に追加・インストール
           </button>
-          <div style="font-size:9.5px; color:#78350f; margin-top:6px; line-height:1.3;">
-            ※以前のアイコンが残っている場合は、ホーム画面の古いアイコンを一度長押し削除してから追加してください。
-          </div>
         </div>
 
-        <!-- Method 1: File Pick Direct -->
-        <div class="setup-box" onclick="triggerFilePicker()">
-          <span style="font-size:24px; display:block; margin-bottom:4px;">📂</span>
-          <span style="font-size:13px; font-weight:800; color:#0284c7; display:block;">Excelファイルを選ぶ (.xlsm / .xlsx)</span>
-          <span style="font-size:10px; color:#64748b;">Googleドライブやスマホ内の「2025年カレンダー.xlsm」を直接開く</span>
-        </div>
-
-        <!-- Method 2: PC Export / Sync Download -->
-        <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:12px; padding:12px; margin-bottom:12px;">
-          <div style="font-size:12px; font-weight:800; color:#166534; margin-bottom:4px;">💻 PC側との共有（結果を反映）</div>
-          <p style="font-size:10px; color:#15803d; margin-bottom:8px;">
-            本日配った記録（A列に1、T列に完了時刻）を反映した最新のExcelファイルを生成してGoogleドライブへ保存します。
-          </p>
-          <button onclick="exportUpdatedExcel()" style="width:100%; background:#10b981; color:#fff; border:none; padding:8px; border-radius:8px; font-size:12px; font-weight:800; cursor:pointer;">
-            📥 更新済みExcelを書き出す (.xlsx)
-          </button>
-        </div>
-
-        <!-- Method 3: Reset / Clear Local Data -->
-        <button onclick="clearAllLocalData()" style="width:100%; background:#fee2e2; border:1px solid #fca5a5; color:#991b1b; padding:10px; border-radius:8px; font-size:12px; font-weight:800; cursor:pointer;">
-          🗑️ 端末データを完全に初期化（見本サンプルに戻す）
+        <!-- System Reset / Clear -->
+        <button onclick="clearAllLocalData()" style="width:100%; background:#fee2e2; border:1px solid #fca5a5; color:#991b1b; padding:8px; border-radius:8px; font-size:11px; font-weight:700; cursor:pointer;">
+          🗑️ 全案件と端末データを初期化
         </button>
       </div>
     </div>
@@ -676,7 +685,7 @@
 
     window.addEventListener('DOMContentLoaded', () => {
       initGPS();
-      loadCachedData();
+      initProjects();
 
       // Register PWA Service Worker
       if ('serviceWorker' in navigator) {
@@ -1143,13 +1152,7 @@
           }
 
           if (parsedList.length > 0) {
-            customers = parsedList;
-            currentFocusTarget = null; // Clear old target to force auto-selection of closest unvisited
-            const elLbl = document.getElementById('lblFileSource');
-            if (elLbl) elLbl.textContent = `${file.name} (${customers.length}件)`;
-            recalculateDistances();
-            closeSetupModal();
-            showToast(`✅ ${file.name} から ${customers.length}件を読み込みました！`);
+            createNewProjectFromExcel(file, parsedList);
           } else {
             alert("配布対象のお客様が見つかりませんでした。");
           }
@@ -1164,11 +1167,299 @@
     }
 
     // Export Updated Excel to Google Drive / PC
+    // =========================================================================
+    // 📁 Multi-Project / Multiple Excel Management System
+    // =========================================================================
+    const PROJ_META_KEY = 'yoshimachi_projects_meta_v2';
+    const ACTIVE_PROJ_KEY = 'yoshimachi_active_proj_id_v2';
+    const SAMPLE_PROJ_ID = 'proj_sample_demo';
+
+    let projectsMeta = [];
+    let activeProjectId = '';
+
+    function openSetupModal() {
+      saveCurrentProjectData();
+      renderProjectModalList();
+      document.getElementById('setupModal').classList.remove('hidden');
+    }
+
+    function initProjects() {
+      try {
+        const savedMeta = localStorage.getItem(PROJ_META_KEY);
+        const savedActiveId = localStorage.getItem(ACTIVE_PROJ_KEY);
+
+        if (savedMeta) {
+          projectsMeta = JSON.parse(savedMeta);
+        }
+
+        // Migrate legacy single-project data if exists
+        const legacyData = localStorage.getItem('yoshimachi_delivery_customers_v2');
+        if (legacyData && (!projectsMeta || projectsMeta.length === 0 || (projectsMeta.length === 1 && projectsMeta[0].id === SAMPLE_PROJ_ID))) {
+          try {
+            const parsedLegacy = JSON.parse(legacyData);
+            if (Array.isArray(parsedLegacy) && parsedLegacy.length > 5) {
+              const legacyProjId = 'proj_2025_calendar';
+              const legacyProj = {
+                id: legacyProjId,
+                name: "2025年カレンダー配布",
+                fileName: "2025年カレンダー.xlsm",
+                total: parsedLegacy.length,
+                done: parsedLegacy.filter(x => x.done === 1).length,
+                updatedAt: new Date().toLocaleDateString('ja-JP'),
+                isSample: false
+              };
+              localStorage.setItem('yoshimachi_proj_data_' + legacyProjId, legacyData);
+              projectsMeta = [legacyProj];
+              activeProjectId = legacyProjId;
+              saveProjectsMeta();
+            }
+          } catch(e) {}
+        }
+
+        if (!projectsMeta || projectsMeta.length === 0) {
+          projectsMeta = [
+            {
+              id: SAMPLE_PROJ_ID,
+              name: "見本サンプル案件",
+              fileName: "架空デモデータ",
+              total: DEFAULT_DATA.length,
+              done: DEFAULT_DATA.filter(x => x.done === 1).length,
+              updatedAt: new Date().toLocaleDateString('ja-JP'),
+              isSample: true
+            }
+          ];
+          localStorage.setItem('yoshimachi_proj_data_' + SAMPLE_PROJ_ID, JSON.stringify(DEFAULT_DATA));
+          activeProjectId = SAMPLE_PROJ_ID;
+          saveProjectsMeta();
+        } else {
+          activeProjectId = savedActiveId || projectsMeta[0].id;
+          if (!projectsMeta.some(p => p.id === activeProjectId)) {
+            activeProjectId = projectsMeta[0].id;
+          }
+        }
+
+        loadActiveProjectData();
+
+      } catch (e) {
+        console.error("Project init error:", e);
+        customers = JSON.parse(JSON.stringify(DEFAULT_DATA));
+        recalculateDistances();
+      }
+    }
+
+    function saveProjectsMeta() {
+      try {
+        localStorage.setItem(PROJ_META_KEY, JSON.stringify(projectsMeta));
+        localStorage.setItem(ACTIVE_PROJ_KEY, activeProjectId);
+      } catch (e) {}
+    }
+
+    function getActiveProject() {
+      return projectsMeta.find(p => p.id === activeProjectId) || projectsMeta[0] || null;
+    }
+
+    function loadActiveProjectData() {
+      try {
+        const rawData = localStorage.getItem('yoshimachi_proj_data_' + activeProjectId);
+        if (rawData) {
+          const parsed = JSON.parse(rawData);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            customers = parsed;
+            const curProj = getActiveProject();
+            updateProjectHeaderDisplay(curProj);
+            currentFocusTarget = null;
+            recalculateDistances();
+            return;
+          }
+        }
+      } catch (e) {}
+      customers = JSON.parse(JSON.stringify(DEFAULT_DATA));
+      const curProj = getActiveProject();
+      updateProjectHeaderDisplay(curProj);
+      currentFocusTarget = null;
+      recalculateDistances();
+    }
+
+    function saveCurrentProjectData() {
+      if (!activeProjectId) return;
+      try {
+        localStorage.setItem('yoshimachi_proj_data_' + activeProjectId, JSON.stringify(customers));
+        const curProj = getActiveProject();
+        if (curProj) {
+          curProj.total = customers.length;
+          curProj.done = customers.filter(x => x.done === 1).length;
+          curProj.updatedAt = new Date().toLocaleDateString('ja-JP') + ' ' + new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+          saveProjectsMeta();
+          updateProjectHeaderDisplay(curProj);
+        }
+      } catch (e) {}
+    }
+
+    function updateProjectHeaderDisplay(curProj) {
+      const lbl = document.getElementById('lblFileSource');
+      if (lbl && curProj) {
+        lbl.textContent = `📁 ${curProj.name} (${curProj.total}件) ▾`;
+      }
+    }
+
+    // Switch Project
+    function switchProject(targetId) {
+      if (targetId === activeProjectId) {
+        closeSetupModal();
+        return;
+      }
+      saveCurrentProjectData();
+
+      activeProjectId = targetId;
+      localStorage.setItem(ACTIVE_PROJ_KEY, activeProjectId);
+      loadActiveProjectData();
+
+      closeSetupModal();
+      const curProj = getActiveProject();
+      showToast(`📁 「${curProj.name}」に切り替えました！`, "✅");
+    }
+
+    // Create New Project from Excel File
+    function createNewProjectFromExcel(file, parsedList) {
+      const defaultName = file.name.replace(/\.[^/.]+$/, "");
+      const projName = prompt("新しい案件（プロジェクト）の名前を入力してください：", defaultName);
+      if (projName === null) return; // user cancelled
+
+      saveCurrentProjectData();
+
+      const newProjId = 'proj_' + Date.now();
+      const newProj = {
+        id: newProjId,
+        name: (projName.trim() || defaultName),
+        fileName: file.name,
+        total: parsedList.length,
+        done: parsedList.filter(x => x.done === 1).length,
+        updatedAt: new Date().toLocaleDateString('ja-JP') + ' ' + new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }),
+        isSample: false
+      };
+
+      projectsMeta.unshift(newProj);
+      activeProjectId = newProjId;
+
+      customers = parsedList;
+      saveCurrentProjectData();
+      saveProjectsMeta();
+
+      currentFocusTarget = null;
+      recalculateDistances();
+
+      closeSetupModal();
+      showToast(`🎉 案件「${newProj.name}」を作成しました（${customers.length}件）`, "✅");
+    }
+
+    // Rename Project
+    function renameProject(projId) {
+      const proj = projectsMeta.find(p => p.id === projId);
+      if (!proj) return;
+      const newName = prompt("案件名を変更してください：", proj.name);
+      if (newName && newName.trim()) {
+        proj.name = newName.trim();
+        saveProjectsMeta();
+        const curProj = getActiveProject();
+        updateProjectHeaderDisplay(curProj);
+        renderProjectModalList();
+        showToast(`✏️ 案件名を「${proj.name}」に変更しました`);
+      }
+    }
+
+    // Delete Project
+    function deleteProject(projId) {
+      const proj = projectsMeta.find(p => p.id === projId);
+      if (!proj) return;
+      if (projectsMeta.length <= 1) {
+        alert("最後の1つの案件は削除できません。");
+        return;
+      }
+      if (!confirm(`案件「${proj.name}」と配達記録を完全に削除しますか？\n（※PCの元Excelファイルは消えません）`)) {
+        return;
+      }
+
+      localStorage.removeItem('yoshimachi_proj_data_' + projId);
+      projectsMeta = projectsMeta.filter(p => p.id !== projId);
+
+      if (activeProjectId === projId) {
+        activeProjectId = projectsMeta[0].id;
+        loadActiveProjectData();
+      } else {
+        saveProjectsMeta();
+      }
+
+      renderProjectModalList();
+      showToast(`🗑️ 案件「${proj.name}」を削除しました`);
+    }
+
+    // Render Modal Project Cards List
+    function renderProjectModalList() {
+      const container = document.getElementById('projectCardsList');
+      if (!container) return;
+
+      const curProj = getActiveProject();
+      const elName = document.getElementById('modalActiveProjName');
+      const elMetrics = document.getElementById('modalActiveProjMetrics');
+      const elBadge = document.getElementById('modalProjCountBadge');
+
+      if (elBadge) elBadge.textContent = `${projectsMeta.length}件`;
+      if (curProj && elName && elMetrics) {
+        elName.textContent = `📁 ${curProj.name}`;
+        const pct = curProj.total > 0 ? ((curProj.done / curProj.total) * 100).toFixed(1) : 0;
+        elMetrics.textContent = `${curProj.done} / ${curProj.total}件 (${pct}%)`;
+      }
+
+      container.innerHTML = '';
+      projectsMeta.forEach(p => {
+        const isActive = (p.id === activeProjectId);
+        const pct = p.total > 0 ? ((p.done / p.total) * 100).toFixed(0) : 0;
+
+        const card = document.createElement('div');
+        card.style.cssText = `
+          background: ${isActive ? '#f0fdf4' : '#fff'};
+          border: 1.5px solid ${isActive ? '#10b981' : '#cbd5e1'};
+          border-radius: 10px;
+          padding: 8px 10px;
+          margin-bottom: 7px;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+          cursor: pointer;
+        `;
+
+        card.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;">
+            <div style="display:flex; align-items:center; gap:5px; overflow:hidden;">
+              <span style="font-size:14px;">📁</span>
+              <strong style="font-size:12px; color:${isActive ? '#15803d' : '#1e293b'}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px;">${p.name}</strong>
+              ${isActive ? '<span style="font-size:9px; background:#10b981; color:#fff; padding:1px 5px; border-radius:8px; font-weight:800; flex-shrink:0;">使用中</span>' : ''}
+            </div>
+            <span style="font-size:9.5px; color:#64748b; flex-shrink:0;">${p.updatedAt || ''}</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; font-size:10.5px; color:#475569; margin-bottom:6px;">
+            <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:170px;">📄 ${p.fileName}</span>
+            <span style="font-weight:700; color:${isActive ? '#166534' : '#0284c7'}; flex-shrink:0;">進捗: ${p.done}/${p.total} (${pct}%)</span>
+          </div>
+          <div style="display:flex; gap:6px; justify-content:flex-end;" onclick="event.stopPropagation()">
+            ${!isActive ? `<button onclick="switchProject('${p.id}')" style="background:#0284c7; color:#fff; border:none; padding:4px 10px; border-radius:6px; font-size:10.5px; font-weight:700; cursor:pointer;">切替</button>` : ''}
+            <button onclick="renameProject('${p.id}')" style="background:#f1f5f9; border:1px solid #cbd5e1; color:#475569; padding:4px 8px; border-radius:6px; font-size:10px; font-weight:700; cursor:pointer;">✏️ 名前変更</button>
+            ${!p.isSample && projectsMeta.length > 1 ? `<button onclick="deleteProject('${p.id}')" style="background:#fef2f2; border:1px solid #fecaca; color:#b91c1c; padding:4px 8px; border-radius:6px; font-size:10px; font-weight:700; cursor:pointer;">🗑️ 削除</button>` : ''}
+          </div>
+        `;
+
+        card.onclick = () => switchProject(p.id);
+        container.appendChild(card);
+      });
+    }
+
+    // Export Updated Excel to Google Drive / PC
     function exportUpdatedExcel() {
       try {
+        const curProj = getActiveProject();
+        const projName = curProj ? curProj.name : "配布結果";
+
         const rows = [
           // Header row (matching Excel 7行目)
-          ["配布済み", "リンク", "郵送予定", "手渡し予定", "配布予定", "顧客番号", "顧客名", "フリガナ", "郵便番号", "住所", "電話番号", "ランク", "RFM値", "R", "F", "M", "GPS座標", "処理", "現在地からの距離", "更新日時"]
+          ["配布済み", "リンク", "郵送予定", "手渡し予定", "配布予定", "顧客番号", "顧客名", "フリガナ", "郵便番号", "住所", "電話番号", "ランク", "RFM値", "R(最新購買日)", "F(購買頻度)", "M(購買金額)", "GPS座標", "処理", "現在地からの距離", "更新日時"]
         ];
 
         customers.forEach(c => {
@@ -1198,73 +1489,30 @@
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "シート");
 
-        const filename = `配布結果_${new Date().toISOString().slice(0,10)}.xlsx`;
+        const dateStr = new Date().toISOString().slice(0,10);
+        const filename = `配布結果_${projName}_${dateStr}.xlsx`;
         XLSX.writeFile(wb, filename);
 
-        showToast(`📥 PC共有用ファイル「${filename}」を書き出しました！`);
-        closeSetupModal();
+        showToast(`📥 「${filename}」を書き出しました！`, "✅");
       } catch (err) {
         alert("書き出しエラー: " + err.message);
       }
     }
 
-    function loadDefaultSampleData() {
-      customers = JSON.parse(JSON.stringify(DEFAULT_DATA));
-      currentFocusTarget = null;
-      const elLbl = document.getElementById('lblFileSource');
-      if (elLbl) elLbl.textContent = "（※見本サンプルデータ表示中）";
-      recalculateDistances();
-      closeSetupModal();
-      showToast("見本サンプルデータに戻しました");
-    }
-
-    const STORAGE_KEY = 'yoshimachi_delivery_customers_v2';
-
-    // Auto purge legacy storage keys immediately
-    try {
-      localStorage.removeItem('panaden_delivery_customers');
-      localStorage.removeItem('delivery_navi_customers');
-    } catch (e) {}
-
     function clearAllLocalData() {
-      if (confirm("スマホ端末に保存されているデータを完全に消去し、架空の見本サンプルに戻しますか？")) {
+      if (confirm("すべての案件と端末に保存されたデータを初期化しますか？\n（※PCの元Excelファイルは消えません）")) {
         try {
-          localStorage.removeItem(STORAGE_KEY);
-          localStorage.removeItem('panaden_delivery_customers');
           localStorage.clear();
         } catch(e) {}
-        loadDefaultSampleData();
-        showToast("🗑️ 端末データを完全に初期化しました");
+        initProjects();
+        closeSetupModal();
+        showToast("🗑️ すべての案件データを初期化しました");
       }
     }
 
-    // Local Storage Caching
+    // Auto save current project data
     function saveCache() {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(customers));
-      } catch (e) {}
-    }
-
-    function loadCachedData() {
-      try {
-        // Enforce removal of old cache key
-        localStorage.removeItem('panaden_delivery_customers');
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          // Safety guard: if stored data contains legacy private names, purge it
-          const hasOldData = parsed.some(c => c.name && (c.name.includes("津川") || c.name.includes("秋元") || c.name.includes("本郷")));
-          if (!hasOldData && parsed.length > 0) {
-            customers = parsed;
-            document.getElementById('lblFileSource').textContent = "端末保存データ読み込み済";
-            recalculateDistances();
-            return;
-          } else {
-            localStorage.removeItem(STORAGE_KEY);
-          }
-        }
-      } catch (e) {}
-      loadDefaultSampleData();
+      saveCurrentProjectData();
     }
 
     function showToast(msg) {
